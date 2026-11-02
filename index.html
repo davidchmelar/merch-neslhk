@@ -66,6 +66,7 @@ details.more a{color:var(--accent)}
 .sizes{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
 .sz{display:flex;flex-direction:column;align-items:center;gap:4px;border:1px solid var(--line);border-radius:10px;padding:8px 4px}
 .sz b{font-size:14px}
+.szp{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
 .step{display:flex;align-items:center;gap:6px}
 .step button{width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg);font-size:18px;line-height:1;cursor:pointer}
 .step button:focus-visible,.btn:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
@@ -393,16 +394,33 @@ const MIKINA_BEZ_KAPUCE = {
   colors:["cl_bila","cl_cerna","cl_tmavesed","cl_melir","cl_cervena","cl_royal","cl_navy","cl_zelena","cl_granat"],
   sizes:["XS","S","M","L","XL","2XL","3XL"]  
 };
+// ===== CENY =====
+// Prodejní cena = cena oblečení s DPH (podle velikosti) + cena potisku/výšivky, zaokrouhleno nahoru na celé Kč.
+// Ceny jsou podle ceníku z 2. 11. 2026 (bílá barva). Uprav čísla tady, formulář spočítá zbytek sám.
+const POTISK = { triko: 169.40, mikina: 169.40, ksiltovka: 73 };
+const CENA_S_DPH = {
+  // trička: 159,90 Kč bez DPH × 1,21 = 193,48 Kč; 3XL 179,90 Kč bez DPH × 1,21 = 217,68 Kč
+  "triko-d":  { XS:193.48, S:193.48, M:193.48, L:193.48, XL:193.48, "2XL":193.48 },
+  "triko-p":  { S:193.48, M:193.48, L:193.48, XL:193.48, "2XL":193.48, "3XL":217.68 },
+  "mikina-p": { XS:211.75, S:211.75, M:211.75, L:211.75, XL:211.75, "2XL":211.75, "3XL":229.90 },
+  "hoodie-d": { S:289.19, M:289.19, L:289.19, XL:289.19, "2XL":289.19 },
+  "hoodie-p": { XS:289.19, S:289.19, M:289.19, L:289.19, XL:289.19, "2XL":289.19, "3XL":313.39, "4XL":325.49 },
+  "ksilt":    { UNI:44.77 }
+};
+const POTISK_PRODUKTU = { "triko-d":POTISK.triko, "triko-p":POTISK.triko, "mikina-p":POTISK.mikina, "hoodie-d":POTISK.mikina, "hoodie-p":POTISK.mikina, "ksilt":POTISK.ksiltovka };
+const round2 = n => Math.round(n*100)/100;
+// prodejní cena se zaokrouhluje NAHORU na celé koruny
+function cena(p, size){ const c=(CENA_S_DPH[p.id]||{})[size]; return c==null ? 0 : Math.ceil(round2(c + (POTISK_PRODUKTU[p.id]||0))); }
+function cenaOd(p){ const v=p.sizes.map(s=>cena(p,s)); return {min:Math.min(...v), max:Math.max(...v)}; }
 const PRODUCTS = [
-  {id:"triko-d", name:"Tričko dámské", shape:"tee-w", photos:"tee_w", price:0, colors:TEE_COLORS, sizes:["XS","S","M","L","XL","2XL"], meta:"Dámské přiléhavé tričko s hlubším kulatým výstřihem. Vepředu malé vyšité logo na prsou, na zádech strom.", dot:"--red"  },
-  {id:"triko-p", name:"Tričko pánské", shape:"tee-m", photos:"tee_m", price:0, colors:TEE_COLORS, sizes:["S","M","L","XL","2XL","3XL"], meta:"Pánské přiléhavé tričko. Vepředu malé vyšité logo na prsou, na zádech strom.", dot:"--red"  },
-  {id:"mikina-d", name:"Mikina bez kapuce dámská", shape:"crew-w", photo:true, ...MIKINA_BEZ_KAPUCE, price:0, meta:"Mikina s kulatým výstřihem, unisex střih – dámám doporučujeme o číslo menší. Vepředu malé vyšité logo na prsou, na zádech strom.", dot:"--green"},
-  {id:"mikina-p", name:"Mikina bez kapuce pánská", shape:"crew-m", photo:true, ...MIKINA_BEZ_KAPUCE, price:0, meta:"Mikina s kulatým výstřihem, unisex střih. Vepředu malé vyšité logo na prsou, na zádech strom.", dot:"--green"},
-  {id:"hoodie-d", name:"Mikina s kapucí dámská", shape:"hood-w", photos:"hoodw", price:0, colors:HOODW_COLORS, sizes:["S","M","L","XL","2XL"],
+  {id:"triko-d", name:"Tričko dámské", shape:"tee-w", photos:"tee_w",  colors:TEE_COLORS, sizes:["XS","S","M","L","XL","2XL"], meta:"Dámské přiléhavé tričko s hlubším kulatým výstřihem. Vepředu malé vyšité logo na prsou, na zádech strom.", dot:"--red"  },
+  {id:"triko-p", name:"Tričko pánské", shape:"tee-m", photos:"tee_m",  colors:TEE_COLORS, sizes:["S","M","L","XL","2XL","3XL"], meta:"Pánské přiléhavé tričko. Vepředu malé vyšité logo na prsou, na zádech strom.", dot:"--red"  },
+  {id:"mikina-p", name:"Mikina bez kapuce (unisex)", shape:"crew-m", photo:true, ...MIKINA_BEZ_KAPUCE,  meta:"Mikina s kulatým výstřihem, unisex střih pro pány i dámy – dámám doporučujeme o číslo menší. Vepředu malé vyšité logo na prsou, na zádech strom.", dot:"--green"},
+  {id:"hoodie-d", name:"Mikina s kapucí dámská", shape:"hood-w", photos:"hoodw",  colors:HOODW_COLORS, sizes:["S","M","L","XL","2XL"],
    meta:"Dámská mikina s kapucí a klokaní kapsou. Vepředu malé vyšité logo na prsou, na zádech strom.", dot:"--blue"  },
-  {id:"hoodie-p", name:"Mikina s kapucí pánská", shape:"hood-m", photos:"hood", price:0, colors:HOOD_COLORS, sizes:["XS","S","M","L","XL","2XL","3XL","4XL"],
+  {id:"hoodie-p", name:"Mikina s kapucí pánská", shape:"hood-m", photos:"hood",  colors:HOOD_COLORS, sizes:["XS","S","M","L","XL","2XL","3XL","4XL"],
    meta:"Mikina s kapucí a klokaní kapsou. Vepředu malé vyšité logo na prsou, na zádech strom.", dot:"--blue"  },
-  {id:"ksilt", name:"Kšiltovka", shape:"cap", price:0,
+  {id:"ksilt", name:"Kšiltovka", shape:"cap", 
    colors:["k_cerna","k_bila","k_cervena","k_royal","k_navy","k_zelena","k_zluta"], sizes:["UNI"],
    photos:"cap", views:[["front","Předek – strom"],["left","Levý bok – logo NESLHK.COM"]],
    meta:"Kšiltovka s nastavitelným zapínáním vzadu. Vepředu vyšitý strom, na levém boku logo NESLHK.COM.", dot:"--yellow"  }
@@ -420,7 +438,7 @@ const LOGOS = {fig:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAXAAAAChCAYAAA
 const state = {};
 PRODUCTS.forEach(p=>{ state[p.id]={color:p.colors[0], qty:Object.fromEntries(p.sizes.map(s=>[s,0]))}; });
 
-const fmt = n => n.toLocaleString("cs-CZ")+" Kč";
+const fmt = n => round2(n).toLocaleString("cs-CZ",{minimumFractionDigits:(Math.round(n*100)%100?2:0),maximumFractionDigits:2})+" Kč";
 const fmtP = fmt;
 const totalSections = PRODUCTS.length + 2;
 document.getElementById("kontakt-tag").textContent = `Sekce 1 z ${totalSections}`;
@@ -440,11 +458,11 @@ function renderProducts(){
         <div class="mock" style="grid-template-columns:repeat(${(p.views||DEFAULT_VIEWS).length},1fr)">${(p.views||DEFAULT_VIEWS).map(([v,c])=>`<figure><div class="pic" data-v="${v}"></div><figcaption>${c}</figcaption></figure>`).join("")}</div>
         <div class="info">
           <p class="meta">${p.meta}</p>
-          <div class="price">${fmt(p.price)} <small>/ ks</small></div>
+          <div class="price">${(r=>r.min===r.max ? fmt(r.min) : "od "+fmt(r.min))(cenaOd(p))} <small>/ ks vč. DPH a loga</small></div>
           <div class="row-label">Barva</div>
           <div class="colors">${p.colors.map(c=>`<label><input type="radio" name="c-${p.id}" id="c-${p.id}-${c}" value="${c}" ${c===st.color?"checked":""}><span class="sw" style="background:${COLORS[c].hex}"></span>${dispName(COLORS[c].name)}</label>`).join("")}</div>
           <div class="row-label">Velikost a počet kusů</div>
-          <div class="sizes">${p.sizes.map(s=>`<div class="sz" data-s="${s}"><b>${s==="UNI"?"univerzální":s}</b><div class="step"><button type="button" data-d="-1" aria-label="Ubrat ${s}">−</button><output>0</output><button type="button" data-d="1" aria-label="Přidat ${s}">+</button></div></div>`).join("")}</div>
+          <div class="sizes">${p.sizes.map(s=>`<div class="sz" data-s="${s}"><b>${s==="UNI"?"univerzální":s}</b><span class="szp">${fmt(cena(p,s))}</span><div class="step"><button type="button" data-d="-1" aria-label="Ubrat ${s}">−</button><output>0</output><button type="button" data-d="1" aria-label="Přidat ${s}">+</button></div></div>`).join("")}</div>
           <div class="sub" data-sub></div>
           
         </div>
@@ -466,7 +484,7 @@ function renderProducts(){
 function items(){
   const out=[];
   PRODUCTS.forEach(p=>{ const st=state[p.id];
-    p.sizes.forEach(s=>{ if(st.qty[s]>0) out.push({produkt:p.name, id:p.id, barva:COLORS[st.color].name, velikost:s, ks:st.qty[s], cena:p.price, mezisoucet:st.qty[s]*p.price}); });
+    p.sizes.forEach(s=>{ if(st.qty[s]>0) out.push({produkt:p.name, id:p.id, barva:COLORS[st.color].name, velikost:s, ks:st.qty[s], cena:cena(p,s), mezisoucet:round2(st.qty[s]*cena(p,s))}); });
   });
   return out;
 }
@@ -476,9 +494,9 @@ function update(){
     const sec=document.getElementById(p.id), st=state[p.id];
     let n=0;
     sec.querySelectorAll(".sz").forEach(el=>{ const q=st.qty[el.dataset.s]; el.querySelector("output").textContent=q; el.classList.toggle("has",q>0); n+=q; });
-    sec.querySelector("[data-sub]").textContent = n? `Vybráno ${n} ks (${dispName(COLORS[st.color].name)}) = ${fmt(n*p.price)}` : "Zatím nevybráno – sekci můžeš přeskočit.";
+    sec.querySelector("[data-sub]").textContent = n? `Vybráno ${n} ks (${dispName(COLORS[st.color].name)}) = ${fmt(p.sizes.reduce((a,s)=>a+st.qty[s]*cena(p,s),0))}` : "Zatím nevybráno – sekci můžeš přeskočit.";
   });
-  const it=items(), total=it.reduce((a,b)=>a+b.mezisoucet,0), cnt=it.reduce((a,b)=>a+b.ks,0);
+  const it=items(), total=round2(it.reduce((a,b)=>a+b.mezisoucet,0)), cnt=it.reduce((a,b)=>a+b.ks,0);
   document.getElementById("bar-sum").textContent=fmt(total);
   document.getElementById("bar-cnt").textContent= cnt? `${cnt} ks v objednávce` : "Zatím nic v objednávce";
   const t=document.getElementById("sumtable");
@@ -507,7 +525,7 @@ document.getElementById("send").addEventListener("click", async ()=>{
   if(!document.getElementById("souhlas").checked) { showStatus("err","Potvrď prosím, že je objednávka závazná."); return; }
   if(!WEB3FORMS_KEY || WEB3FORMS_KEY.startsWith("VLOZ")) { showStatus("err","Formulář ještě není nastavený: chybí přístupový klíč Web3Forms. Dej vědět správci formuláře."); return; }
   const o={jmeno:val("jmeno"), role:val("role"), trida:val("trida"), email:val("email"), poznamka:val("poznamka"),
-    polozky:it, celkem:it.reduce((a,b)=>a+b.mezisoucet,0)};
+    polozky:it, celkem:round2(it.reduce((a,b)=>a+b.mezisoucet,0))};
   const btn=document.getElementById("send"); btn.disabled=true; btn.textContent="Odesílám…";
   const payload={
     access_key: WEB3FORMS_KEY,
